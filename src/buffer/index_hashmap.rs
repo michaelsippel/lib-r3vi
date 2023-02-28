@@ -110,6 +110,11 @@ where
         self.data.write().unwrap().remove(&key);
         self.port.notify(&IndexArea::Set(vec![key]));
     }
+
+    pub fn clear(&mut self) {
+        self.data.write().unwrap().clear();
+        self.port.notify(&IndexArea::Set(self.data.read().unwrap().keys().cloned().collect()));
+    }
 }
 
 //<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>

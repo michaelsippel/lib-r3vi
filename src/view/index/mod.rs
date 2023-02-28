@@ -9,7 +9,7 @@ use {
 
 //<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum IndexArea<Key> {
     Empty,
     Full,
