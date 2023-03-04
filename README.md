@@ -41,3 +41,8 @@ assert_eq!(projected_view.get(&1), Some(15));
 assert_eq!(projected_view.get(&2), Some(11));
 
 ```
+
+
+## License
+
+[GPLv3](COPYING)
