@@ -6,7 +6,7 @@ use {
         },
     },
     std::sync::RwLock,
-    std::{collections::HashMap, hash::Hash, sync::Arc, ops::{Deref, DerefMut}},
+    std::{iter::FromIterator, collections::HashMap, hash::Hash, sync::Arc, ops::{Deref, DerefMut}},
 };
 
 pub struct IndexBufferView<Key, Item>(Arc<RwLock<HashMap<Key, Item>>>)
@@ -46,6 +46,18 @@ where
 {
     data: Arc<RwLock<HashMap<Key, Item>>>,
     port: InnerViewPort<dyn IndexView<Key, Item = Item>>,
+}
+
+impl<Key, Item> FromIterator<(Key, Item)> for IndexBuffer<Key, Item>
+where Key: Send+Sync+Clone+Eq+Hash,
+      Item: Send+Sync+Clone
+{
+    fn from_iter<T>(iter: T) -> Self
+    where T: IntoIterator<Item = (Key, Item)> {
+        let mut buf = IndexBuffer::new();
+        buf.insert_iter(iter);
+        buf
+    }
 }
 
 impl<Key, Item> IndexBuffer<Key, Item>
