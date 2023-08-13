@@ -9,6 +9,12 @@ pub trait SequenceView: View<Msg = usize> {
 }
 
 //<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
+/* It has a default implementation,
+   so why not merge it with SequenceView trait ?
+
+   iter will make it un-"object safe" [E0038],
+   therefore it needs to be implemented in a separate trait
+ */
 
 pub trait SequenceViewExt: SequenceView {
     fn iter<'a>(&'a self) -> SequenceViewIter<'a, Self> {
