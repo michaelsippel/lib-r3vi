@@ -97,6 +97,22 @@ where
     }
 }
 
+impl<V: View + ?Sized + 'static> ViewPort<V>
+where V::Msg: Clone
+{
+    // make the view of `other_port` accessible from `self`
+    pub fn attach_to(&self, other_port: OuterViewPort<V>) {
+        self.attach_to_port(other_port.0);
+    }
+    pub fn attach_to_port(&self, other_port: ViewPort<V>) {
+        self.set_view( other_port.view.read().unwrap().clone() );
+        other_port.add_observer( self.cast.clone() );
+
+        self.update_hooks.write().unwrap().clear();
+        self.add_update_hook( Arc::new(other_port) );
+    }
+}
+
 impl<V: View + ?Sized> UpdateTask for ViewPort<V>
 where
     V::Msg: Clone + Send + Sync,
