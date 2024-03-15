@@ -1,6 +1,7 @@
 use {
     crate::{
         view::{
+            Observer,
             InnerViewPort, OuterViewPort, View, ViewPort,
             singleton::SingletonView
         },
@@ -14,18 +15,18 @@ use {
 
 //<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
 
-pub struct SingletonBufferView<T: Clone + Send + Sync + 'static>(Arc<RwLock<T>>);
+pub struct SingletonBufferView<T: Clone + Send + Sync + 'static>(pub Arc<RwLock<T>>);
 
 impl<T> View for SingletonBufferView<T>
 where
-    T: Clone + Send + Sync + 'static,
+    T: Clone + Send + Sync + 'static
 {
     type Msg = ();
 }
 
 impl<T> SingletonView for SingletonBufferView<T>
 where
-    T: Clone + Send + Sync + 'static,
+    T: Clone + Send + Sync + 'static
 {
     type Item = T;
 
@@ -39,15 +40,39 @@ where
 #[derive(Clone)]
 pub struct SingletonBuffer<T>
 where
-    T: Clone + Send + Sync + 'static,
+    T: Clone + Send + Sync + 'static
 {
-    value: Arc<RwLock<T>>,
-    port: InnerViewPort<dyn SingletonView<Item = T>>
+    pub value: Arc<RwLock<T>>,
+    pub port: InnerViewPort<dyn SingletonView<Item = T>>
+}
+
+pub struct SingletonBufferTarget<T>
+where
+    T: Clone + Send + Sync + 'static
+{
+    buffer: SingletonBuffer<T>,
+    src_view: Option<Arc<dyn SingletonView<Item = T>>>
+}
+
+impl<T> Observer< dyn SingletonView<Item = T> > for SingletonBufferTarget<T>
+where
+    T: Clone + Send + Sync + 'static
+{
+    fn notify(&mut self, _msg: &()) {
+        if let Some(v) = self.src_view.clone() {
+            self.buffer.set( v.get() );
+        }
+    }
+
+    fn reset(&mut self, view: Option<Arc<dyn SingletonView<Item = T>>>) {
+        self.src_view = view;
+        self.notify(&());
+    }
 }
 
 impl<T> SingletonBuffer<T>
 where
-    T: Clone + Send + Sync + 'static,
+    T: Clone + Send + Sync + 'static
 {
     pub fn with_port(value: T, port: InnerViewPort<dyn SingletonView<Item = T>>) -> Self {
         let value = Arc::new(RwLock::new(value));
@@ -57,6 +82,26 @@ where
             value,
             port
         }
+    }
+
+    pub fn attach_to(&self, port: OuterViewPort<dyn SingletonView<Item = T>>) -> Arc<RwLock<SingletonBufferTarget<T>>> {
+        self.port.0.add_update_hook(Arc::new(port.0.clone()));
+
+        let target = Arc::new(RwLock::new(
+            SingletonBufferTarget {
+                buffer: self.clone(),
+                src_view: None
+            }
+        ));
+
+        port.add_observer(target.clone());
+        target
+    }
+
+    pub fn make_in_port(&self) -> InnerViewPort<dyn SingletonView<Item = T>> {
+        let port = ViewPort::new();
+        self.attach_to(port.outer());
+        port.into_inner()
     }
 
     pub fn new(value: T) -> Self {
@@ -83,6 +128,10 @@ where
         *v = new_value;
         drop(v);
         self.port.notify(&());
+    }
+
+    pub fn into_inner(self) -> Arc<RwLock<T>> {
+        self.value
     }
 }
 
