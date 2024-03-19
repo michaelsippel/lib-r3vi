@@ -19,7 +19,10 @@
 //!# Examples
 //!
 //! ```
-//! use r3vi::buffer::vec::*;
+//! use r3vi::{
+//!     buffer::vec::*,
+//!     view::sequence::*
+//! };
 //!
 //! let mut buffer = VecBuffer::<i32>::new();
 //! buffer.push(3);
@@ -27,7 +30,7 @@
 //! let projected_port = buffer.get_port()
 //!                       .to_sequence()     // make SequenceView from Vec
 //!                       .map(|x| x + 10)
-//!                       .filter(|x| x > 10);
+//!                       .filter(|x| *x > 10);
 //!
 //! let projected_view = projected_port.get_view();
 //!
