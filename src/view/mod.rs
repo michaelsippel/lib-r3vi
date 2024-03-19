@@ -43,4 +43,5 @@ pub mod singleton;
 pub mod sequence;
 pub mod index;
 pub mod grid;
+pub mod list;
 

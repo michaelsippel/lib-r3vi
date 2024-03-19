@@ -6,6 +6,7 @@ pub mod sgl2seq;
 pub mod vec2seq;
 pub mod vec2bin;
 pub mod vec2json;
+pub mod vec2list;
 pub mod seq2idx;
 pub mod enumerate_sequence;
 pub mod filter_sequence;
