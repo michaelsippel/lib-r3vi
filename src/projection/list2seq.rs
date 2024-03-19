@@ -119,40 +119,44 @@ where
 #[cfg(test)]
 mod tests {
     use crate::buffer::vec::VecBuffer;
-    use crate::view::port::UpdateTask;
+    use crate::view::{
+        port::UpdateTask,
+        list::ListView,
+        sequence::*
+    };
 
     #[test]
-    fn list_to_seq() {
+    fn vec_to_list_to_seq() {
         let mut buf = VecBuffer::<char>::new();
         let seq_view = buf.get_port().to_list().to_sequence();
 
-        assert_eq!(seq_view.get_view().unwrap().len(), Some(0));
+        assert_eq!(seq_view.get_view().len(), Some(0));
 
         buf.push('a');
 
         seq_view.0.update();
-        assert_eq!(seq_view.get_view().unwrap().len(), Some(1));
-        assert_eq!(seq_view.get_view().unwrap().get(&0), Some('a'));
-        assert_eq!(seq_view.get_view().unwrap().get(&1), None);
+        assert_eq!(seq_view.get_view().len(), Some(1));
+        assert_eq!(seq_view.get_view().get(&0), Some('a'));
+        assert_eq!(seq_view.get_view().get(&1), None);
         
         
         buf.push('b');
 
         seq_view.0.update();
-        assert_eq!(seq_view.get_view().unwrap().len(), Some(2));
-        assert_eq!(seq_view.get_view().unwrap().get(&0), Some('a'));
-        assert_eq!(seq_view.get_view().unwrap().get(&1), Some('b'));
-        assert_eq!(seq_view.get_view().unwrap().get(&2), None);
+        assert_eq!(seq_view.get_view().len(), Some(2));
+        assert_eq!(seq_view.get_view().get(&0), Some('a'));
+        assert_eq!(seq_view.get_view().get(&1), Some('b'));
+        assert_eq!(seq_view.get_view().get(&2), None);
 
 
         buf.push('c');
         buf.remove(0);
 
         seq_view.0.update();
-        assert_eq!(seq_view.get_view().unwrap().len(), Some(2));
-        assert_eq!(seq_view.get_view().unwrap().get(&0), Some('b'));
-        assert_eq!(seq_view.get_view().unwrap().get(&1), Some('c'));
-        assert_eq!(seq_view.get_view().unwrap().get(&2), None);
+        assert_eq!(seq_view.get_view().len(), Some(2));
+        assert_eq!(seq_view.get_view().get(&0), Some('b'));
+        assert_eq!(seq_view.get_view().get(&1), Some('c'));
+        assert_eq!(seq_view.get_view().get(&2), None);
     }
 }
 

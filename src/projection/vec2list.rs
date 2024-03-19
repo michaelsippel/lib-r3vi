@@ -131,39 +131,44 @@ where
 #[cfg(test)]
 mod tests {
     use crate::buffer::vec::VecBuffer;
-    use crate::view::port::UpdateTask;
+    use crate::view::{
+        port::UpdateTask,
+        list::ListView,
+    };
 
     #[test]
     fn vec_to_list() {
         let mut buf = VecBuffer::<char>::new();
         let list_view = buf.get_port().to_list();
 
-        assert_eq!(list_view.get_view().unwrap().len(), Some(0));
+        assert_eq!(list_view.get_view().len(), Some(0));
 
         buf.push('a');
 
         list_view.0.update();
-        assert_eq!(list_view.get_view().unwrap().len(), Some(1));
-        assert_eq!(list_view.get_view().unwrap().get(&0), Some('a'));
-        assert_eq!(list_view.get_view().unwrap().get(&1), None);
-        
+        assert_eq!(list_view.get_view().len(), Some(1));
+        assert_eq!(list_view.get_view().get(&0), Some('a'));
+        assert_eq!(list_view.get_view().get(&1), None);
+
         
         buf.push('b');
 
         list_view.0.update();
-        assert_eq!(list_view.get_view().unwrap().len(), Some(2));
-        assert_eq!(list_view.get_view().unwrap().get(&0), Some('a'));
-        assert_eq!(list_view.get_view().unwrap().get(&1), Some('b'));
-        assert_eq!(list_view.get_view().unwrap().get(&2), None);
+        assert_eq!(list_view.get_view().len(), Some(2));
+        assert_eq!(list_view.get_view().get(&0), Some('a'));
+        assert_eq!(list_view.get_view().get(&1), Some('b'));
+        assert_eq!(list_view.get_view().get(&2), None);
 
 
         buf.push('c');
         buf.remove(0);
 
         list_view.0.update();
-        assert_eq!(list_view.get_view().unwrap().len(), Some(2));
-        assert_eq!(list_view.get_view().unwrap().get(&0), Some('b'));
-        assert_eq!(list_view.get_view().unwrap().get(&1), Some('c'));
-        assert_eq!(list_view.get_view().unwrap().get(&2), None);
+        assert_eq!(list_view.get_view().len(), Some(2));
+        assert_eq!(list_view.get_view().get(&0), Some('b'));
+        assert_eq!(list_view.get_view().get(&1), Some('c'));
+        assert_eq!(list_view.get_view().get(&2), None);
     }
 }
+
+
