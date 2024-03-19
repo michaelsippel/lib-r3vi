@@ -17,6 +17,7 @@ pub mod flatten_sequence;
 pub mod flatten_grid;
 pub mod map_singleton;
 pub mod map_sequence;
+pub mod map_list;
 pub mod map_index_item;
 pub mod map_index_key;
 pub mod grid_offset;
