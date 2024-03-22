@@ -21,6 +21,46 @@ where Item: Clone + Send + Sync + 'static
 
 //<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
 
+pub trait ListViewExt<T>: ListView<T>
+where T: Clone + Send + Sync + 'static
+{
+    fn iter<'a>(&'a self) -> ListViewIter<'a, T, Self> {
+        ListViewIter { _phantom: std::marker::PhantomData, view: self, cur: 0 }
+    }
+}
+
+impl<T, V: ListView<T> + ?Sized> ListViewExt<T> for V
+where T: Clone + Send + Sync + 'static
+{}
+
+//<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
+
+pub struct ListViewIter<'a, T, V>
+where
+    T: Clone + Send + Sync + 'static,
+    V: ListView<T> + ?Sized,
+{
+    _phantom: std::marker::PhantomData<T>,
+    view: &'a V,
+    cur: usize,
+}
+
+impl<'a, T, V> Iterator for ListViewIter<'a, T, V>
+where
+    T: Clone + Send + Sync + 'static,
+    V: ListView<T> + ?Sized,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let i = self.cur;
+        self.cur += 1;
+        self.view.get(&i)
+    }
+}
+
+//<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
+
 use std::sync::RwLock;
 use std::{ops::Deref, sync::Arc};
 
