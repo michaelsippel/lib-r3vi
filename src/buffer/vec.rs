@@ -1,6 +1,9 @@
 use {
     crate::{
-        view::{InnerViewPort, OuterViewPort, View, ViewPort},
+        view::{
+            InnerViewPort, OuterViewPort, View, Observer, ViewPort,
+            list::*
+        }
     },
     std::sync::RwLock,
     std::{
@@ -31,6 +34,42 @@ where
 
 //<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
 
+pub struct VecBufferTarget<T>
+where T: Clone + Send + Sync + 'static
+{
+    buffer: VecBuffer<T>,
+    src_view: Option<Arc<dyn ListView<T>>>
+}
+
+impl<T> Observer< dyn ListView<T> > for VecBufferTarget<T>
+where T: Clone + Send + Sync + 'static
+{
+    fn notify(&mut self, msg: &ListDiff<T>) {
+        self.buffer.apply_diff(
+            match msg.clone() {
+                ListDiff::Clear => VecDiff::Clear,
+                ListDiff::Remove(idx) => VecDiff::Remove(idx),
+                ListDiff::Insert{ idx, val } => VecDiff::Insert{ idx, val },
+                ListDiff::Update{ idx, val } => VecDiff::Update{ idx, val }
+            }
+        );
+    }
+
+    fn reset(&mut self, src_view: Option<Arc<dyn ListView<T>>>) {
+        self.src_view = src_view;
+
+        // copy all elements of new view
+        if let Some(v) = self.src_view.as_ref() {
+            self.buffer.clear();
+            for x in v.iter() {
+                self.buffer.push(x.clone());
+            }
+        }
+    }
+}
+
+//<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
+
 #[derive(Clone)]
 pub struct VecBuffer<T>
 where
@@ -56,6 +95,20 @@ where
             data,
             port
         }
+    }
+
+    pub fn attach_to(&self, port: OuterViewPort< dyn ListView<T> >) -> Arc<RwLock<VecBufferTarget<T>>> {
+        self.port.0.add_update_hook(Arc::new(port.0.clone()));
+
+        let target = Arc::new(RwLock::new(
+            VecBufferTarget {
+                buffer: self.clone(),
+                src_view: None
+            }
+        ));
+        port.add_observer(target.clone());
+
+        target
     }
 
     pub fn with_data(data: Vec<T>) -> Self {
@@ -133,6 +186,10 @@ where
             val: self.get(idx),
         }
     }
+
+    pub fn into_inner(self) -> Arc<RwLock<Vec<T>>> {
+        self.data
+    }
 }
 
 //<<<<>>>><<>><><<>><<<*>>><<>><><<>><<<<>>>>
@@ -179,7 +236,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::buffer::vec::*;
+    use crate::{
+        buffer::vec::*,
+        view::{
+            port::UpdateTask,
+            list::ListView,
+        }
+    };
 
     #[test]
     fn vec_buffer1() {
@@ -188,6 +251,38 @@ mod tests {
         buffer.push('a');
         buffer.push('b');
         buffer.push('c');
+    }
+
+    #[test]
+    fn list_to_vec() {
+        let mut buf = VecBuffer::<char>::new();
+        let list_view = buf.get_port().to_list();
+
+        let mut buf2 = VecBuffer::new();
+        let keepalive = buf2.attach_to( list_view.clone() );
+
+        assert_eq!(buf2.len(), 0);
+
+        buf.push('a');
+
+        buf2.get_port().0.update();
+        assert_eq!(buf2.len(), 1);
+        assert_eq!(buf2.get(0), 'a');
+
+        buf.push('b');
+
+        list_view.0.update();
+        assert_eq!(buf2.len(), 2);
+        assert_eq!(buf2.get(0), 'a');
+        assert_eq!(buf2.get(1), 'b');
+
+        buf.push('c');
+        buf.remove(0);
+
+        list_view.0.update();
+        assert_eq!(buf2.len(), 2);
+        assert_eq!(buf2.get(0), 'b');
+        assert_eq!(buf2.get(1), 'c');
     }
 }
 

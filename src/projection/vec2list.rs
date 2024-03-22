@@ -1,7 +1,9 @@
 use {
     crate::{
         view::{
-            InnerViewPort, Observer, ObserverBroadcast, ObserverExt, OuterViewPort, View, ViewPort,
+            View, ViewPort,
+            InnerViewPort, OuterViewPort,
+            Observer, ObserverBroadcast, ObserverExt,
             list::{ListView, ListDiff},
         },
         buffer::vec::VecDiff,
