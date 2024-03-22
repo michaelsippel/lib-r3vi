@@ -69,7 +69,7 @@ where
             }
             VecDiff::Push(val) => {
                 self.cast.notify(&ListDiff::Insert{
-                    idx: self.cur_len + 1,
+                    idx: self.cur_len,
                     val: val.clone()
                 });
                 self.cur_len += 1;
