@@ -23,4 +23,5 @@ pub mod map_index_key;
 pub mod grid_offset;
 pub mod decorate_sequence;
 pub mod reverse_sequence;
+pub mod reverse_list;
 

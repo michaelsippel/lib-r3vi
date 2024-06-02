@@ -135,7 +135,10 @@ where
 
         opds.resize_with(1 + *idx, || false);
         let op = opds.get(*idx).cloned().unwrap_or(false);
-        *opds.get_mut(*idx).unwrap() = np;
+        // if let Some(o) = opds.get_mut(*idx) {
+            // *o = np;
+        // }
+       *opds.get_mut(*idx).unwrap() = np;
 
         drop(opds);
 
