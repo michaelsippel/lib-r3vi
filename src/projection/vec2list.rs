@@ -67,6 +67,7 @@ where
     fn notify(&mut self, diff: &VecDiff<T>) {
         match diff {
             VecDiff::Clear => {
+                self.cur_len = 0;
                 self.cast.notify(&ListDiff::Clear);
             }
             VecDiff::Push(val) => {

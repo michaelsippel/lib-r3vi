@@ -78,24 +78,20 @@ where Item: Clone + Send + Sync + 'static,
         if let Some(v) = self.src_view.as_ref() {
             self.end = v.len().unwrap();
             for idx in 0 .. self.end {
-                if idx < self.end {
-                    let val = v.get( &(self.end - idx - 1) ).unwrap();
-                    self.cast.notify(&ListDiff::Insert{ idx: idx, val });
-                }
+                let val = v.get( &(self.end - idx - 1) ).unwrap();
+                self.cast.notify(&ListDiff::Insert{ idx: idx, val });
             }
+        } else {
+            self.end = 0;
         }
     }
 
     fn notify(&mut self, msg: &ListDiff<Item>) {
-        /* todo optimize
-         */
-        //let len = self.src_view.len().unwrap();
-
         self.cast.notify(&match msg {
             ListDiff::Clear => {
                 self.end = 0;
                 ListDiff::Clear
-            },
+            }
             ListDiff::Remove(mut idx) => {
                 self.end -= 1;
                 idx = self.end - idx;

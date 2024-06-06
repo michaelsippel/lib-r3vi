@@ -107,8 +107,6 @@ where V::Msg: Clone
     pub fn attach_to_port(&self, other_port: ViewPort<V>) {
         self.set_view( other_port.view.read().unwrap().clone() );
         other_port.add_observer( self.cast.clone() );
-        // todo: forward reset() ?
-
         self.update_hooks.write().unwrap().clear();
         self.add_update_hook( Arc::new(other_port) );
     }
