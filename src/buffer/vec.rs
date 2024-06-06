@@ -83,18 +83,22 @@ impl<T> VecBuffer<T>
 where
     T: Clone + Send + Sync + 'static,
 {
-    pub fn with_data_port(data: Vec<T>, port: InnerViewPort<RwLock<Vec<T>>>) -> Self {
-        let data = Arc::new(RwLock::new(data));
+    pub fn with_data_arc_port(data: Arc<RwLock<Vec<T>>>, port: InnerViewPort<RwLock<Vec<T>>>) -> Self {
         port.set_view(Some(data.clone()));
 
         for x in data.read().unwrap().iter().cloned() {
             port.notify(&VecDiff::Push(x));
         }
-            
+
         VecBuffer {
             data,
             port
         }
+    }
+
+    pub fn with_data_port(data: Vec<T>, port: InnerViewPort<RwLock<Vec<T>>>) -> Self {
+        let data = Arc::new(RwLock::new(data));
+        Self::with_data_arc_port( data, port )
     }
 
     pub fn attach_to(&self, port: OuterViewPort< dyn ListView<T> >) -> Arc<RwLock<VecBufferTarget<T>>> {
@@ -271,7 +275,7 @@ mod tests {
 
         buf.push('b');
 
-        list_view.0.update();
+        buf2.get_port().0.update();
         assert_eq!(buf2.len(), 2);
         assert_eq!(buf2.get(0), 'a');
         assert_eq!(buf2.get(1), 'b');
@@ -279,7 +283,7 @@ mod tests {
         buf.push('c');
         buf.remove(0);
 
-        list_view.0.update();
+        buf2.get_port().0.update();
         assert_eq!(buf2.len(), 2);
         assert_eq!(buf2.get(0), 'b');
         assert_eq!(buf2.get(1), 'c');
