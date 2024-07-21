@@ -38,8 +38,8 @@ where
     }
 
     pub fn set_view(&self, view: Option<Arc<V>>) {
-        self.update();
-        *self.view.write().unwrap() = view.clone();
+        let mut v = self.view.write().unwrap();        
+        *v = view.clone();
         self.cast.write().unwrap().reset(view);
     }
 
@@ -101,14 +101,37 @@ impl<V: View + ?Sized + 'static> ViewPort<V>
 where V::Msg: Clone
 {
     // make the view of `other_port` accessible from `self`
-    pub fn attach_to(&self, other_port: OuterViewPort<V>) {
-        self.attach_to_port(other_port.0);
+    pub fn attach_to(&mut self, other_port: OuterViewPort<V>) -> Arc<RwLock<InnerViewPort<V>>> {
+        self.attach_to_port(other_port.0)
     }
-    pub fn attach_to_port(&self, other_port: ViewPort<V>) {
-        self.set_view( other_port.view.read().unwrap().clone() );
-        other_port.add_observer( self.cast.clone() );
+
+    pub fn attach_to_port(&mut self, other_port: ViewPort<V>) -> Arc<RwLock<InnerViewPort<V>>> {
+        /* 1 . replace broad cast to remove it as observer
+         *     from other port when re-attaching a port
+         */
+        let keepalive = Arc::new(RwLock::new( self.inner() ));
+
+        other_port.update(); // todo: required?
+        other_port.add_observer( keepalive.clone() );
         self.update_hooks.write().unwrap().clear();
         self.add_update_hook( Arc::new(other_port) );
+        self.update();
+        keepalive
+    }
+
+    pub fn detach(&self) {
+        self.update_hooks.write().unwrap().clear();
+        self.set_view(None);
+    }
+}
+
+impl<V: View + ?Sized + 'static> Observer<V> for InnerViewPort<V> where V::Msg: Clone + Send + Sync + 'static {
+    fn reset(&mut self, new_view: Option<Arc<V>>) {
+         self.set_view(new_view);
+    }
+ 
+    fn notify(&mut self, msg: &V::Msg) {
+         self.0.cast.write().unwrap().notify(msg);
     }
 }
 
@@ -125,7 +148,6 @@ where
         for hook in v {
             hook.update();
         }
-
         self.cast.read().unwrap().update();
     }
 }
