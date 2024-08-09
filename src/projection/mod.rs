@@ -3,6 +3,7 @@ pub mod projection_helper;
 
 pub mod sgl2idx;
 pub mod sgl2seq;
+pub mod vec2sgl;
 pub mod vec2seq;
 pub mod vec2bin;
 pub mod vec2json;
